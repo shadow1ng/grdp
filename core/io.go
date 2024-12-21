@@ -29,7 +29,10 @@ func ReadByte(r io.Reader) (byte, error) {
 
 func ReadUInt8(r io.Reader) (uint8, error) {
 	b, err := ReadBytes(1, r)
-	return uint8(b[0]), err
+	if len(b) == 0 {
+		return 0, err
+	}
+	return b[0], err
 }
 
 func ReadUint16LE(r io.Reader) (uint16, error) {
@@ -129,4 +132,3 @@ func RGB565ToRGB(data uint16) (r, g, b uint8) {
 
 	return
 }
-

@@ -288,6 +288,9 @@ func (s *SEC) Close() error {
 }
 
 func (s *SEC) sendFlagged(flag uint16, data []byte) (n int, err error) {
+	if s.transport == nil {
+		return 0, errors.New("sendFlagged.transport == nil")
+	}
 	glog.Debug("sendFlagged:", hex.EncodeToString(data))
 	b := s.encryt(flag, data)
 	return s.transport.Write(b)
@@ -647,6 +650,9 @@ func (e *ClientSecurityExchangePDU) serialize() []byte {
 	return buff.Bytes()
 }
 func (c *Client) sendClientRandom() {
+	if c.ServerSecurityData() == nil || c.ServerSecurityData().ServerCertificate.CertData == nil {
+		return
+	}
 	glog.Info("send Client Random")
 
 	clientRandom := core.Random(32)
@@ -668,6 +674,10 @@ func (c *Client) sendClientRandom() {
 	}
 
 	ePublicKey, mPublicKey := c.ServerSecurityData().ServerCertificate.CertData.GetPublicKey()
+	if len(mPublicKey) == 0 || len(clientRandom) == 0 {
+		glog.Error("Invalid input data for big integer calculation")
+		return
+	}
 	b := new(big.Int).SetBytes(core.Reverse(mPublicKey))
 	e := new(big.Int).SetInt64(int64(ePublicKey))
 	d := new(big.Int).SetBytes(core.Reverse(clientRandom))
